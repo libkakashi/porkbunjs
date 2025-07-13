@@ -3,7 +3,7 @@ import {PorkbunClient} from '../src';
 // Initialize the client
 const client = new PorkbunClient({
   apiKey: process.env.PORKBUN_API_KEY || 'your-api-key',
-  secretApiKey: process.env.PORKBUN_SECRET_API_KEY || 'your-secret-api-key',
+  secretKey: process.env.PORKBUN_SECRET_API_KEY || 'your-secret-api-key',
 });
 
 async function dnsManagementExamples() {

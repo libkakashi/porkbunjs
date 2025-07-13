@@ -2,6 +2,8 @@
 
 A comprehensive TypeScript library for the Porkbun API v3, providing easy access to domain management, DNS records, DNSSEC, and SSL certificate functionality.
 
+> **Note:** This is an unofficial library and is not affiliated with or endorsed by Porkbun.
+
 ## Features
 
 - 🔒 **Full TypeScript support** with complete type definitions
@@ -24,7 +26,7 @@ import { PorkbunClient } from 'porkbunjs';
 
 const client = new PorkbunClient({
   apiKey: 'YOUR_API_KEY',
-  secretApiKey: 'YOUR_SECRET_API_KEY'
+  secretKey: 'YOUR_SECRET_API_KEY'
 });
 
 // Test the connection
@@ -45,7 +47,7 @@ Get your API keys from [porkbun.com/account/api](https://porkbun.com/account/api
 ```typescript
 const client = new PorkbunClient({
   apiKey: 'YOUR_API_KEY',
-  secretApiKey: 'YOUR_SECRET_API_KEY',
+  secretKey: 'YOUR_SECRET_API_KEY',
   baseUrl: 'https://api.porkbun.com/api/json/v3', // optional
   timeout: 30000 // optional, in milliseconds
 });
@@ -322,7 +324,7 @@ If you need to force IPv4 connections, you can use the IPv4-only hostname:
 ```typescript
 const client = new PorkbunClient({
   apiKey: 'YOUR_API_KEY',
-  secretApiKey: 'YOUR_SECRET_API_KEY',
+  secretKey: 'YOUR_SECRET_API_KEY',
   baseUrl: 'https://api-ipv4.porkbun.com/api/json/v3'
 });
 ```

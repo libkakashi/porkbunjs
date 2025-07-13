@@ -1,5 +1,5 @@
 {
-  "name": "porkbunjs",
+  "name": "@libkakashi/porkbunjs",
   "version": "1.0.0",
   "description": "A comprehensive TypeScript library for the Porkbun API v3",
   "main": "build/index.js",

@@ -28,19 +28,19 @@ import {PorkbunAuthError, PorkbunRateLimitError} from './errors';
 
 export class PorkbunClient {
   readonly #apiKey: string;
-  readonly #secretApiKey: string;
+  readonly #secretKey: string;
   readonly #baseUrl: string;
   readonly #timeout: number;
 
   constructor(config: PorkbunConfig) {
     this.#apiKey = config.apiKey;
-    this.#secretApiKey = config.secretApiKey;
+    this.#secretKey = config.secretKey;
     this.#baseUrl = config.baseUrl || 'https://api.porkbun.com/api/json/v3';
     this.#timeout = config.timeout || 30000;
   }
 
   #getAuth(): PorkbunAuth {
-    return {apikey: this.#apiKey, secretapikey: this.#secretApiKey};
+    return {apikey: this.#apiKey, secretapikey: this.#secretKey};
   }
 
   #convertApiResponse<T>(response: unknown): T {

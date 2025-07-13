@@ -226,7 +226,7 @@ export type GetSSLBundleResult = Partial<SSLBundle>;
 // API client configuration
 export interface PorkbunConfig {
   apiKey: string;
-  secretApiKey: string;
+  secretKey: string;
   baseUrl?: string;
   timeout?: number;
 }
