@@ -3,25 +3,25 @@ import type {
   PingResponse,
   PricingResponse,
   ListDomainsOptions,
-  ListDomainsResult,
   UpdateNameServersOptions,
-  GetNameServersResult,
   AddURLForwardOptions,
-  GetURLForwardingResult,
-  DomainCheckResult,
   CreateGlueRecordOptions,
   UpdateGlueRecordOptions,
-  GetGlueRecordsResult,
   CreateDNSRecordOptions,
-  CreateDNSRecordResult,
   EditDNSRecordOptions,
   EditDNSRecordByTypeOptions,
-  GetDNSRecordsResult,
   CreateDNSSECRecordOptions,
-  GetDNSSECRecordsResult,
-  GetSSLBundleResult,
   DNSRecordType,
   PorkbunAuth,
+  URLForward,
+  Domain,
+  DomainPricing,
+  DomainAvailabilityCheck,
+  DomainCheckLimits,
+  GlueRecordHost,
+  DNSRecord,
+  DNSSECRecord,
+  SSLBundle,
 } from './types';
 
 import {PorkbunAuthError, PorkbunRateLimitError} from './errors';
@@ -150,26 +150,12 @@ export class PorkbunClient {
    * This endpoint does not require authentication
    */
   async getPricing(): Promise<PricingResponse> {
-    const url = `${this.#baseUrl}/pricing/get`;
+    const endpoint = '/pricing/get';
 
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      return this.#convertApiResponse<PricingResponse>(result);
-    } catch (error) {
-      throw new Error(
-        `Failed to get pricing: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    }
+    const {pricing} = await this.#makeRequest<{
+      pricing: Record<string, DomainPricing>;
+    }>(endpoint);
+    return pricing;
   }
 
   // Domain management methods
@@ -178,67 +164,82 @@ export class PorkbunClient {
    * Update the name servers for a domain
    */
   async updateNameServers(domain: string, options: UpdateNameServersOptions) {
-    await this.#makeRequest<{}>(`/domain/updateNs/${domain}`, options);
+    const endpoint = `/domain/updateNs/${domain}`;
+    await this.#makeRequest<{}>(endpoint, options);
   }
 
   /**
    * Get the authoritative name servers for a domain
    */
-  getNameServers(domain: string) {
-    return this.#makeRequest<GetNameServersResult>(`/domain/getNs/${domain}`);
+  async getNameServers(domain: string) {
+    const endpoint = `/domain/getNs/${domain}`;
+    const {ns} = await this.#makeRequest<{ns: string[]}>(endpoint);
+    return ns;
   }
 
   /**
    * Get all domains in the account
    */
-  listDomains(options: ListDomainsOptions = {}) {
+  async listDomains(options: ListDomainsOptions = {}) {
+    const endpoint = '/domain/listAll';
     const data = {
       ...options,
       ...(options.includeLabels !== undefined && {
         includeLabels: options.includeLabels ? 'yes' : 'no',
       }),
     };
-    return this.#makeRequest<ListDomainsResult>('/domain/listAll', data);
+    const {domains} = await this.#makeRequest<{domains: Domain[]}>(
+      endpoint,
+      data,
+    );
+    return domains;
   }
 
   /**
    * Add URL forwarding for a domain
    */
   async addURLForward(domain: string, options: AddURLForwardOptions) {
+    const endpoint = `/domain/addUrlForward/${domain}`;
     const data = {
       ...options,
       includePath: options.includePath ? 'yes' : 'no',
       wildcard: options.wildcard ? 'yes' : 'no',
     };
-    await this.#makeRequest<{}>(`/domain/addUrlForward/${domain}`, data);
+    await this.#makeRequest<{}>(endpoint, data);
   }
 
   /**
    * Get URL forwarding records for a domain
    */
-  getURLForwarding(domain: string) {
-    return this.#makeRequest<GetURLForwardingResult>(
-      `/domain/getUrlForwarding/${domain}`,
+  async getURLForwarding(domain: string) {
+    const endpoint = `/domain/getUrlForwarding/${domain}`;
+
+    const {forwards} = await this.#makeRequest<{forwards: URLForward[]}>(
+      endpoint,
     );
+    return forwards;
   }
 
   /**
    * Delete a URL forward record
    */
   async deleteURLForward(domain: string, recordId: string) {
-    await this.#makeRequest<{}>(
-      `/domain/deleteUrlForward/${domain}/${recordId}`,
-    );
+    const endpoint = `/domain/deleteUrlForward/${domain}/${recordId}`;
+    await this.#makeRequest<{}>(endpoint);
   }
 
   /**
    * Check domain availability
    * Note: This endpoint is rate limited
    */
-  checkDomain(domain: string) {
-    return this.#makeRequest<DomainCheckResult>(
-      `/domain/checkDomain/${domain}`,
-    );
+  async checkDomain(domain: string) {
+    const endpoint = `/domain/checkDomain/${domain}`;
+
+    const {response, limits} = await this.#makeRequest<{
+      response: DomainAvailabilityCheck;
+      limits: DomainCheckLimits;
+    }>(endpoint);
+    return {response, limits};
   }
 
   /**
@@ -249,10 +250,8 @@ export class PorkbunClient {
     subdomain: string,
     options: CreateGlueRecordOptions,
   ) {
-    await this.#makeRequest<{}>(
-      `/domain/createGlue/${domain}/${subdomain}`,
-      options,
-    );
+    const endpoint = `/domain/createGlue/${domain}/${subdomain}`;
+    await this.#makeRequest<{}>(endpoint, options);
   }
 
   /**
@@ -263,24 +262,28 @@ export class PorkbunClient {
     subdomain: string,
     options: UpdateGlueRecordOptions,
   ) {
-    await this.#makeRequest<{}>(
-      `/domain/updateGlue/${domain}/${subdomain}`,
-      options,
-    );
+    const endpoint = `/domain/updateGlue/${domain}/${subdomain}`;
+    await this.#makeRequest<{}>(endpoint, options);
   }
 
   /**
    * Delete a glue record for a domain
    */
   async deleteGlueRecord(domain: string, subdomain: string) {
-    await this.#makeRequest<{}>(`/domain/deleteGlue/${domain}/${subdomain}`);
+    const endpoint = `/domain/deleteGlue/${domain}/${subdomain}`;
+    await this.#makeRequest<{}>(endpoint);
   }
 
   /**
    * Get all glue records for a domain
    */
-  getGlueRecords(domain: string) {
-    return this.#makeRequest<GetGlueRecordsResult>(`/domain/getGlue/${domain}`);
+  async getGlueRecords(domain: string) {
+    const endpoint = `/domain/getGlue/${domain}`;
+
+    const {hosts} = await this.#makeRequest<{
+      hosts: [string, GlueRecordHost][];
+    }>(endpoint);
+    return hosts;
   }
 
   // DNS management methods
@@ -288,11 +291,10 @@ export class PorkbunClient {
   /**
    * Create a DNS record
    */
-  createDNSRecord(domain: string, options: CreateDNSRecordOptions) {
-    return this.#makeRequest<CreateDNSRecordResult>(
-      `/dns/create/${domain}`,
-      options,
-    );
+  async createDNSRecord(domain: string, options: CreateDNSRecordOptions) {
+    const endpoint = `/dns/create/${domain}`;
+    const {id} = await this.#makeRequest<{id: string}>(endpoint, options);
+    return id;
   }
 
   /**
@@ -303,7 +305,8 @@ export class PorkbunClient {
     recordId: string,
     options: EditDNSRecordOptions,
   ) {
-    await this.#makeRequest<{}>(`/dns/edit/${domain}/${recordId}`, options);
+    const endpoint = `/dns/edit/${domain}/${recordId}`;
+    await this.#makeRequest<{}>(endpoint, options);
   }
 
   /**
@@ -315,19 +318,19 @@ export class PorkbunClient {
     subdomain = '',
     options: EditDNSRecordByTypeOptions,
   ) {
-    await this.#makeRequest<{}>(
-      subdomain
-        ? `/dns/editByNameType/${domain}/${type}/${subdomain}`
-        : `/dns/editByNameType/${domain}/${type}`,
-      options,
-    );
+    const endpoint = subdomain
+      ? `/dns/editByNameType/${domain}/${type}/${subdomain}`
+      : `/dns/editByNameType/${domain}/${type}`;
+
+    await this.#makeRequest<{}>(endpoint, options);
   }
 
   /**
    * Delete a DNS record by domain and record ID
    */
   async deleteDNSRecord(domain: string, recordId: string) {
-    await this.#makeRequest<{}>(`/dns/delete/${domain}/${recordId}`);
+    const endpoint = `/dns/delete/${domain}/${recordId}`;
+    await this.#makeRequest<{}>(endpoint);
   }
 
   /**
@@ -338,33 +341,39 @@ export class PorkbunClient {
     type: DNSRecordType,
     subdomain = '',
   ) {
-    await this.#makeRequest<{}>(
-      subdomain
-        ? `/dns/deleteByNameType/${domain}/${type}/${subdomain}`
-        : `/dns/deleteByNameType/${domain}/${type}`,
-    );
+    const endpoint = subdomain
+      ? `/dns/deleteByNameType/${domain}/${type}/${subdomain}`
+      : `/dns/deleteByNameType/${domain}/${type}`;
+
+    await this.#makeRequest<{}>(endpoint);
   }
 
   /**
    * Get all DNS records for a domain or a specific record by ID
    */
-  getDNSRecords(domain: string, recordId?: string) {
-    return this.#makeRequest<GetDNSRecordsResult>(
-      recordId
-        ? `/dns/retrieve/${domain}/${recordId}`
-        : `/dns/retrieve/${domain}`,
-    );
+  async getDNSRecords(domain: string, recordId?: string) {
+    const endpoint = recordId
+      ? `/dns/retrieve/${domain}/${recordId}`
+      : `/dns/retrieve/${domain}`;
+
+    const {records} = await this.#makeRequest<{records: DNSRecord[]}>(endpoint);
+    return records;
   }
 
   /**
    * Get DNS records by domain, subdomain, and type
    */
-  getDNSRecordsByType(domain: string, type: DNSRecordType, subdomain = '') {
-    return this.#makeRequest<GetDNSRecordsResult>(
-      subdomain
-        ? `/dns/retrieveByNameType/${domain}/${type}/${subdomain}`
-        : `/dns/retrieveByNameType/${domain}/${type}`,
-    );
+  async getDNSRecordsByType(
+    domain: string,
+    type: DNSRecordType,
+    subdomain = '',
+  ) {
+    const endpoint = subdomain
+      ? `/dns/retrieveByNameType/${domain}/${type}/${subdomain}`
+      : `/dns/retrieveByNameType/${domain}/${type}`;
+
+    const {records} = await this.#makeRequest<{records: DNSRecord[]}>(endpoint);
+    return records;
   }
 
   // DNSSEC methods
@@ -373,23 +382,28 @@ export class PorkbunClient {
    * Create a DNSSEC record
    */
   async createDNSSECRecord(domain: string, options: CreateDNSSECRecordOptions) {
-    await this.#makeRequest<{}>(`/dns/createDnssecRecord/${domain}`, options);
+    const endpoint = `/dns/createDnssecRecord/${domain}`;
+    await this.#makeRequest<{}>(endpoint, options);
   }
 
   /**
    * Get DNSSEC records for a domain
    */
-  getDNSSECRecords(domain: string) {
-    return this.#makeRequest<GetDNSSECRecordsResult>(
-      `/dns/getDnssecRecords/${domain}`,
+  async getDNSSECRecords(domain: string) {
+    const endpoint = `/dns/getDnssecRecords/${domain}`;
+
+    const {records} = await this.#makeRequest<{records: DNSSECRecord[]}>(
+      endpoint,
     );
+    return records;
   }
 
   /**
    * Delete a DNSSEC record
    */
   async deleteDNSSECRecord(domain: string, keyTag: string) {
-    await this.#makeRequest<{}>(`/dns/deleteDnssecRecord/${domain}/${keyTag}`);
+    const endpoint = `/dns/deleteDnssecRecord/${domain}/${keyTag}`;
+    await this.#makeRequest<{}>(endpoint);
   }
 
   // SSL methods
@@ -398,6 +412,7 @@ export class PorkbunClient {
    * Get SSL certificate bundle for a domain
    */
   getSSLBundle(domain: string) {
-    return this.#makeRequest<GetSSLBundleResult>(`/ssl/retrieve/${domain}`);
+    const endpoint = `/ssl/retrieve/${domain}`;
+    return this.#makeRequest<SSLBundle>(endpoint);
   }
 }

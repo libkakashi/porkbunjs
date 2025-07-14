@@ -45,17 +45,9 @@ export interface ListDomainsOptions {
   includeLabels?: boolean;
 }
 
-export interface ListDomainsResult {
-  domains?: Domain[];
-}
-
 // Name servers
 export interface UpdateNameServersOptions {
   ns: string[];
-}
-
-export interface GetNameServersResult {
-  ns?: string[];
 }
 
 // URL forwarding
@@ -74,10 +66,6 @@ export interface AddURLForwardOptions {
   type: 'temporary' | 'permanent';
   includePath: boolean;
   wildcard: boolean;
-}
-
-export interface GetURLForwardingResult {
-  forwards?: URLForward[];
 }
 
 // Domain availability
@@ -109,11 +97,6 @@ export interface DomainCheckLimits {
   naturalLanguage: string;
 }
 
-export interface DomainCheckResult {
-  response?: DomainAvailabilityCheck;
-  limits?: DomainCheckLimits;
-}
-
 // Glue records
 export interface CreateGlueRecordOptions {
   ips: string[];
@@ -126,10 +109,6 @@ export interface UpdateGlueRecordOptions {
 export interface GlueRecordHost {
   v6?: string[];
   v4?: string[];
-}
-
-export interface GetGlueRecordsResult {
-  hosts?: [string, GlueRecordHost][];
 }
 
 // DNS records
@@ -166,10 +145,6 @@ export interface CreateDNSRecordOptions {
   notes?: string;
 }
 
-export interface CreateDNSRecordResult {
-  id?: string;
-}
-
 export interface EditDNSRecordOptions {
   name?: string;
   type: DNSRecordType;
@@ -184,10 +159,6 @@ export interface EditDNSRecordByTypeOptions {
   ttl?: string;
   prio?: string;
   notes?: string | null;
-}
-
-export interface GetDNSRecordsResult {
-  records?: DNSRecord[];
 }
 
 // DNSSEC records
@@ -210,18 +181,12 @@ export interface DNSSECRecord {
   digest: string;
 }
 
-export interface GetDNSSECRecordsResult {
-  records?: Record<string, DNSSECRecord>;
-}
-
 // SSL certificates
 export interface SSLBundle {
   certificatechain: string;
   privatekey: string;
   publickey: string;
 }
-
-export type GetSSLBundleResult = Partial<SSLBundle>;
 
 // API client configuration
 export interface PorkbunConfig {
